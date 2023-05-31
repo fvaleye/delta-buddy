@@ -1,0 +1,10 @@
+line-length = 120
+exclude = [
+    ".mypy_cache",
+    ".ruff_cache",
+    "__pypackages__",
+    "_build",
+    "build",
+    "dist",
+    "notebooks",
+]
