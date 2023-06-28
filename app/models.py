@@ -21,9 +21,7 @@ class Answer(BaseModel):
         :return: the answer in html format
         """
         answer_html = f'<p><blockquote style="font-size:24">{question.capitalize()}</blockquote></p>'
-        answer_html += (
-            f'<p><blockquote style="font-size:18px">{answer.capitalize()}</blockquote></p>'
-        )
+        answer_html += f'<p><blockquote style="font-size:18px">{answer.capitalize()}</blockquote></p>'
         answer_html += "<p><hr/></p>"
         return cls(question=question, answer=answer_html)
 

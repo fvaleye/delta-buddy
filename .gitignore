@@ -1,6 +1,5 @@
 # Custom
-/app/.chainlit/*
-!/app/.chainlit/config.toml
+!/.chainlit/config.toml
 /data_preparation/source_documents/*
 /database/*
 .chainlit/*
