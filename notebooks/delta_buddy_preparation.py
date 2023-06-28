@@ -14,7 +14,7 @@ dbutils.widgets.dropdown(
     "databricks_clean",
     "False",
     ["True", "False"],
-    "Clean the Chromadb and documents directory.",
+    "Clean documents directory.",
 )
 dbutils.widgets.dropdown(
     "databricks_metadata",
@@ -25,11 +25,7 @@ dbutils.widgets.dropdown(
 
 # COMMAND ----------
 
-from app.config import (
-    PERSIST_DIRECTORY,
-    PREPARATION_MODEL_NAME,
-    SOURCE_DOCUMENTS_DIRECTORY,
-)
+from app.config import config
 
 
 def prepare_os() -> None:
@@ -37,9 +33,9 @@ def prepare_os() -> None:
     import shutil
 
     if dbutils.widgets.get("databricks_clean") == "True":
-        shutil.rmtree(f"/{SOURCE_DOCUMENTS_DIRECTORY}", ignore_errors=True)
+        shutil.rmtree(f"/{config.SOURCE_DOCUMENTS_DIRECTORY}", ignore_errors=True)
 
-    os.makedirs(f"/{SOURCE_DOCUMENTS_DIRECTORY}", exist_ok=True)
+    os.makedirs(f"/{config.SOURCE_DOCUMENTS_DIRECTORY}", exist_ok=True)
 
 
 prepare_os()
@@ -47,11 +43,6 @@ print("Os is prepared ✅")
 
 # COMMAND ----------
 
-from app.config import (
-    PERSIST_DIRECTORY,
-    PREPARATION_MODEL_NAME,
-    SOURCE_DOCUMENTS_DIRECTORY,
-)
 from data_preparation.ingest_documents import ingest_documents_in_database
 from data_preparation.prepare_documents import (
     prepare_documents_from_databricks,
@@ -93,9 +84,10 @@ if dbutils.widgets.get("databricks_metadata") == "True":
     print("Preparation of the documents from the Databricks environments is done. ✅")
 
 # COMMAND ----------
+from app.config import config
 
 await ingest_documents_in_database(
-    persist_directory=PERSIST_DIRECTORY,
-    model_name=PREPARATION_MODEL_NAME,
+    persist_directory=config.PERSIST_DIRECTORY,
+    model_name=config.PREPARATION_MODEL_NAME,
 )
 print("The documents have been ingested in the Chroma vectorized database. ✅")

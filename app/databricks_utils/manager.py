@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Iterator, List
+from typing import Any, Dict, Iterator, List, Optional
 
 import uvicorn
 from databricks.sdk import WorkspaceClient
@@ -12,14 +12,7 @@ from fastapi import FastAPI
 from langchain.llms import Databricks
 from pydantic import BaseModel
 
-from app.config import (
-    DATABRICKS_CLUSTER_ID,
-    DATABRICKS_LLM_PORT,
-    DATABRICKS_NOTEBOOK_PATH,
-    DATABRICKS_SERVER_HOSTNAME,
-    DATABRICKS_SERVING_MODE,
-    DATABRICKS_TOKEN,
-)
+from app.config import config
 from app.models import Answer
 
 
@@ -28,11 +21,7 @@ class DatabricksManager(BaseModel):
     Databricks Manager helps you to manage Databricks resources.
     """
 
-    llm: Databricks = Databricks(
-        host=DATABRICKS_SERVER_HOSTNAME,
-        cluster_id=DATABRICKS_CLUSTER_ID,
-        cluster_driver_port=DATABRICKS_LLM_PORT,
-    )
+    llm: Optional[Databricks] = None
     workspace: WorkspaceClient = None
     clean_job: bool = True
 
@@ -46,7 +35,7 @@ class DatabricksManager(BaseModel):
         """
         if not self.workspace:
             self.workspace = WorkspaceClient(
-                host=DATABRICKS_SERVER_HOSTNAME, token=DATABRICKS_TOKEN
+                host=config.DATABRICKS_SERVER_HOSTNAME, token=config.DATABRICKS_TOKEN
             )
         return self.workspace
 
@@ -66,12 +55,12 @@ class DatabricksManager(BaseModel):
                 tasks=[
                     jobs.JobTaskSettings(
                         description="Delta Buddy job",
-                        existing_cluster_id=DATABRICKS_CLUSTER_ID,
+                        existing_cluster_id=config.DATABRICKS_CLUSTER_ID,
                         notebook_task=jobs.NotebookTask(
-                            notebook_path=DATABRICKS_NOTEBOOK_PATH,
+                            notebook_path=config.DATABRICKS_NOTEBOOK_PATH,
                             base_parameters={
                                 "question": question,
-                                "serving_mode": DATABRICKS_SERVING_MODE.NOTEBOOK_API.value,
+                                "serving_mode": config.DATABRICKS_SERVING_MODE.NOTEBOOK_API.value,
                             },
                         ),
                         task_key="Delta_Buddy_Task",
@@ -96,7 +85,7 @@ class DatabricksManager(BaseModel):
         cls,
         app: FastAPI,
         host: str = "0.0.0.0",
-        port: int = int(DATABRICKS_LLM_PORT),
+        port: int = config.DATABRICKS_LLM_PORT,
         uvicorn_config: Dict[Any, Any] = {},
     ):
         """

@@ -1,8 +1,9 @@
 import glob
 import logging
 import os
-from typing import List
 from multiprocessing import Pool
+from typing import List
+
 from langchain.docstore.document import Document
 from langchain.document_loaders import (
     CSVLoader,
@@ -22,7 +23,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.vectorstores import Chroma
 from tqdm import tqdm
 
-from app.config import CHROMA_SETTINGS, SOURCE_DOCUMENTS_DIRECTORY
+from app.config import CHROMA_SETTINGS, config
 
 chunk_size = 500
 chunk_overlap = 0
@@ -57,9 +58,7 @@ def load_single_document(file_path: str) -> List[Document]:
     raise ValueError(f"Unsupported file extension for the document['{file_path}]'")
 
 
-def load_documents(
-    source_dir: str, ignored_files: List[str] = []
-) -> List[Document]:
+def load_documents(source_dir: str, ignored_files: List[str] = []) -> List[Document]:
     """
     Loads all documents from the source documents directory, ignoring specified files
     """
@@ -77,7 +76,9 @@ def load_documents(
         with tqdm(
             total=len(filtered_files), desc="Loading new documents", ncols=80
         ) as pbar:
-            for i, docs in enumerate(pool.imap_unordered(load_single_document, filtered_files)):
+            for i, docs in enumerate(
+                pool.imap_unordered(load_single_document, filtered_files)
+            ):
                 results.extend(docs)
                 pbar.update()
         return results
@@ -104,7 +105,9 @@ async def process_documents(
     )
     logging.info(f"Loaded {len(documents)} new documents from {source_directory}")
     texts = text_splitter.split_documents(documents)
-    logging.info(f"Split into {len(texts)} chunks of text (max. {chunk_size} tokens each)")
+    logging.info(
+        f"Split into {len(texts)} chunks of text (max. {chunk_size} tokens each)"
+    )
     return texts
 
 
@@ -138,7 +141,7 @@ async def ingest_documents_in_database(
         )
         collection = db.get()
         texts = await process_documents(
-            source_directory=SOURCE_DOCUMENTS_DIRECTORY,
+            source_directory=config.SOURCE_DOCUMENTS_DIRECTORY,
             ignored_files=[metadata["source"] for metadata in collection["metadatas"]],
         )
         logging.info("Creating embeddings. May take some minutes...")
@@ -147,7 +150,7 @@ async def ingest_documents_in_database(
     else:
         # Create and store locally vectorstore
         logging.info("Creating new vectorstore")
-        texts = await process_documents(source_directory=SOURCE_DOCUMENTS_DIRECTORY)
+        texts = await process_documents(source_directory=config.SOURCE_DOCUMENTS_DIRECTORY)
         logging.info("Creating embeddings. May take some minutes...")
         db = Chroma.from_documents(
             texts,

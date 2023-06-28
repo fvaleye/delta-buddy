@@ -1,5 +1,6 @@
 import asyncio
-from app.config import PERSIST_DIRECTORY, PREPARATION_MODEL_NAME
+
+from app.config import config
 from data_preparation.ingest_documents import ingest_documents_in_database
 from data_preparation.prepare_documents import (
     prepare_documents_from_databricks,
@@ -40,14 +41,17 @@ if __name__ == "__main__":
     try:
         asyncio.run(prepare_documents_from_databricks(show_errors=False))
     except Exception:
-        print("No Databricks connection configured, check the environments variables. ⚠️")
+        print(
+            "No Databricks connection configured, check the environments variables. ⚠️"
+        )
     print("Preparation of the documents from the Databricks environments is done. ✅")
 
     asyncio.run(
         ingest_documents_in_database(
-            persist_directory=PERSIST_DIRECTORY,
-            model_name=PREPARATION_MODEL_NAME,
+            persist_directory=config.PERSIST_DIRECTORY,
+            model_name=config.PREPARATION_MODEL_NAME,
         )
     )
-    print(f"The documents have been ingested in the Chroma vectorized database in {PERSIST_DIRECTORY}. ✅")
-
+    print(
+        f"The documents have been ingested in the Chroma vectorized database in {config.PERSIST_DIRECTORY}. ✅"
+    )

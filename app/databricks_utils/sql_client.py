@@ -5,20 +5,16 @@ from typing import Iterator, List
 
 from databricks import sql
 
-from app.config import (
-    DATABRICKS_HTTP_PATH,
-    DATABRICKS_SERVER_HOSTNAME,
-    DATABRICKS_TOKEN,
-)
+from app.config import config
 from app.databricks_utils.models import ColumnDefinition, TableDefinition
 
 
 class DatabricksSQL:
     def __init__(
         self,
-        host: str = DATABRICKS_SERVER_HOSTNAME,
-        http_path: str = DATABRICKS_HTTP_PATH,
-        access_token: str = DATABRICKS_TOKEN,
+        host: str = config.DATABRICKS_SERVER_HOSTNAME,
+        http_path: str = config.DATABRICKS_HTTP_PATH,
+        access_token: str = config.DATABRICKS_TOKEN,
     ) -> None:
         self.host = host
         self.http_path = http_path

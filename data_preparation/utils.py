@@ -7,7 +7,7 @@ from aiofiles.os import os
 from aiohttp import ClientSession
 from git import Repo
 
-from app.config import DATABRICKS_SERVER_HOSTNAME, SOURCE_DOCUMENTS_DIRECTORY
+from app.config import config
 from app.databricks_utils.manager import DatabricksManager
 from app.databricks_utils.sql_client import DatabricksSQL
 from data_preparation.ingest_documents import LOADER_MAPPING
@@ -22,13 +22,13 @@ async def download_document_from_urls(
     async with ClientSession() as session:
         for url in urls:
             filename = url.split("/")[-1]
-            if not os.path.exists(f"{SOURCE_DOCUMENTS_DIRECTORY}/{filename}"):
+            if not os.path.exists(f"{config.SOURCE_DOCUMENTS_DIRECTORY}/{filename}"):
                 response = await session.request(
                     method=method, url=url, timeout=timeout_in_seconds
                 )
                 async for data in response.content.iter_chunked(chunks):
                     async with aiofiles.open(
-                        f"{SOURCE_DOCUMENTS_DIRECTORY}/{filename}", "ba"
+                        f"{config.SOURCE_DOCUMENTS_DIRECTORY}/{filename}", "ba"
                     ) as file:
                         await file.write(data)
         return urls
@@ -47,7 +47,7 @@ async def clone_github_repositories(github_urls: List[str]) -> List[str]:
     for github_url in github_urls:
         repository_name = github_url.split("/")[-1]
         github_repository_names.append(repository_name)
-        path = f"{SOURCE_DOCUMENTS_DIRECTORY}/github_repositories/{repository_name}"
+        path = f"{config.SOURCE_DOCUMENTS_DIRECTORY}/github_repositories/{repository_name}"
         if not os.path.exists(path):
             os.makedirs(path, exist_ok=True)
             Repo.clone_from(github_url, path)
@@ -60,7 +60,6 @@ async def get_all_releases_notes_from_github_repository(
     """
     Get all releases notes from a Github repository and save them in a file.
 
-    :param directory:
     :param github_urls:
     :param method:
     :return:
@@ -69,11 +68,11 @@ async def get_all_releases_notes_from_github_repository(
         for github_url in github_urls:
             repository_name = github_url.split("/")[-1]
             os.makedirs(
-                f"{SOURCE_DOCUMENTS_DIRECTORY}/github_repositories",
+                f"{config.SOURCE_DOCUMENTS_DIRECTORY}/github_repositories",
                 exist_ok=True,
             )
             path = (
-                f"{SOURCE_DOCUMENTS_DIRECTORY}/github_repositories/"
+                f"{config.SOURCE_DOCUMENTS_DIRECTORY}/github_repositories/"
                 f"{repository_name}_releases.txt"
             )
             if not os.path.exists(path):
@@ -108,7 +107,7 @@ async def write_line_document(
     file_name: str, item: str, extension: str = "txt", mode: str = "w"
 ) -> None:
     async with aiofiles.open(
-        f"{SOURCE_DOCUMENTS_DIRECTORY}/{file_name}.{extension}",
+        f"{config.SOURCE_DOCUMENTS_DIRECTORY}/{file_name}.{extension}",
         mode,
     ) as file:
         await file.write(item)
@@ -125,7 +124,7 @@ async def from_databricks_environment(
         await write_line_document(
             file_name=file_name,
             item=f"This is an alert definition of the "
-            f"Databricks[{DATABRICKS_SERVER_HOSTNAME}] account:\n{alert}\n",
+            f"Databricks[{config.DATABRICKS_SERVER_HOSTNAME}] account:\n{alert}\n",
             mode="a",
         )
     file_name = "databricks_unity_catalog"
@@ -134,7 +133,7 @@ async def from_databricks_environment(
         await write_line_document(
             file_name=file_name,
             item=f"This is a table definition from "
-            f"Databricks[{DATABRICKS_SERVER_HOSTNAME}] Unity catalog of the "
+            f"Databricks[{config.DATABRICKS_SERVER_HOSTNAME}] Unity catalog of the "
             f"Databricks account:\n{table}\n",
             mode="a",
         )
@@ -144,7 +143,7 @@ async def from_databricks_environment(
         await write_line_document(
             file_name=file_name,
             item=f"This is a cluster definition of the "
-            f"Databricks[{DATABRICKS_SERVER_HOSTNAME}] account:\n{cluster}\n",
+            f"Databricks[{config.DATABRICKS_SERVER_HOSTNAME}] account:\n{cluster}\n",
             mode="a",
         )
     file_name = "databricks_ml_models"
@@ -153,7 +152,7 @@ async def from_databricks_environment(
         await write_line_document(
             file_name=file_name,
             item=f"This is a ML model definition of the "
-            f"Databricks[{DATABRICKS_SERVER_HOSTNAME}] account:\n{model}\n",
+            f"Databricks[{config.DATABRICKS_SERVER_HOSTNAME}] account:\n{model}\n",
             mode="a",
         )
 
